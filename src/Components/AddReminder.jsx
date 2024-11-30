@@ -89,8 +89,11 @@ function AddReminder({userId}) {
 
       
 {/* form for adding a new payment reminder */}
-      <div className="container-fluid d-flex justify-content-center p-2 ">
-        <div className="container p-2 w-25 d-flex flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
+      <div className="row">
+        <div className="col-sm-4"></div>
+        <div className="col-sm-4">
+        <div className="container-fluid d-flex justify-content-center p-2 ">
+        <div className="container p-2 w-25 d-flex flex-grow-1 ps-5 flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
           <input class="form-control form-control-lg formInput text-light mb-3" type="text" id='paymentName' value={paymentName} onChange={e=>setPaymentName(e.target.value)} placeholder="Payment name"/>
           <input class="form-control form-control-lg formInput text-light " type="date" id='paymentDate' value={paymentDate} onChange={e=>setPaymentDate(e.target.value)} placeholder="Next payment date"/>
           <div className='action-button ' style={{backgroundColor:"transparent"}}>
@@ -98,12 +101,15 @@ function AddReminder({userId}) {
           </div>
         </div>
       </div>
+        </div>
+        <div className="col-sm-4"></div>
+      </div>
 
 
 {/* displaying the existing payment reminders */}
       <div className="row mt-5">
-        <div className="col-2"></div>
-        <div className="col-8 ps-3 pe-3">
+        <div className="col-sm-2"></div>
+        <div className="col-sm-8 ps-3 pe-3">
           {
             payments.map((payment)=>(
               <div className="container d-flex flex-row justify-content-between ps-4 mb-5">
@@ -117,7 +123,7 @@ function AddReminder({userId}) {
             ))
           }
         </div>
-        <div className="col-2"></div>
+        <div className="col-sm-2"></div>
       </div>
 
       
