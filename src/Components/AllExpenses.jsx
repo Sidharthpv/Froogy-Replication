@@ -107,26 +107,26 @@ function AllExpenses({userId}) {
     <>
     <div className='d-flex flex-column'>
       <div className="row ">
-        <div className="col-2"></div>
-        <div className="col-8 p-5 d-flex flex-column">
+        <div className="col-sm-2"></div>
+        <div className="col-sm-8 p-5 d-flex flex-column">
             <h5 style={{color:'white'}} className='ms-5'>Expenses</h5>
             <div className="container ps-5 pe-5 pb-5 pt-4">
                 {
                   expensesArray.map((eachExpense)=>(
-                    <div className='container expenseBorder d-flex flex-row justify-content-between  text-center'>
-                    <div className='d-flex flex-row justify-content-evenly p-2 ms-3'>
-                        <div className="d-flex flex-column me-5 ">
+                    <div className='container  expenseBorder d-flex flex-row flex-shrink-1 justify-content-between  text-center'>
+                    <div className='d-flex  flex-row  justify-content-evenly p-2 ms-3'>
+                        <div className="d-flex flex-column me-5 flex-shrink-1">
                             <p style={{color:'white',fontSize:'14px'}} className='m-0 '>{eachExpense.date}</p>
                             <p style={{color:'rgba(255, 255, 255, 0.315)',fontSize:'12px'}} >{eachExpense.month}</p>
                         </div>
-                        <div className="d-flex flex-column ">
-                            <p style={{color:'white',fontSize:'14px'}} className='m-0 text-start'>{eachExpense.name}</p>
+                        <div className="d-flex flex-column flex-shrink-1">
+                            <p style={{color:'white',fontSize:'14px'}} className='m-0 text-start '>{eachExpense.name}</p>
                             <p style={{color:'rgba(255, 255, 255, 0.315)',fontSize:'14px'}} className='text-start'>{eachExpense.category}</p>
                         </div>
                     </div>
-                    <div className='d-flex flex-row-reverse'>
+                    <div className=' d-flex flex-row-reverse'>
                         <div className='d-flex align-items-center'>
-                            <p style={{color:'white',backgroundColor:'transparent',fontSize:'14px'}} className='text-end '>{eachExpense.amount} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-trash" style={{color: "#ffffff",cursor:'pointer',opacity:'0.5'}} onClick={()=>deleteExpense(eachExpense.id,eachExpense.categoryId,eachExpense.amount)}></i></p>
+                            <p style={{color:'white',backgroundColor:'transparent',fontSize:'14px'}} className='text-end '>${eachExpense.amount} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-trash" style={{color: "#ffffff",cursor:'pointer',opacity:'0.5'}} onClick={()=>deleteExpense(eachExpense.id,eachExpense.categoryId,eachExpense.amount)}></i></p>
                         </div>
                     </div>
                 </div>
@@ -136,7 +136,7 @@ function AllExpenses({userId}) {
                 
             </div>
         </div>
-        <div className="col-2"></div>
+        <div className="col-sm-2"></div>
       </div>
 
       <div className="container justify-content-center " style={{marginTop:'-100px'}} >

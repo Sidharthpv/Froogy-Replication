@@ -76,11 +76,11 @@ function Login() {
       <div className="container mt-2 p-5 w-100">
         <div className="container login-background ps-2 pe-2 align-items-start ">
           <div className="row">
-            <div className="col-4 ">
+            <div className="col-sm-4 ">
               
             </div>
-            <div className="col-4">
-              <div className="container login-contents ms-0 d-flex flex-column justify-content-center align-items-start flex-shrink-1">
+            <div className="col-sm-4">
+              <div className="container login-contents ms-0 d-flex flex-column flex-shrink-1 justify-content-center align-items-start flex-shrink-1">
                   <h1 className=''>Heya!</h1>
                   <p style={{fontSize:'16px'}}>Use this simple expense tracker to monitor your daily <br />spending</p>
                   <p className='text-warning'>If you are logging in for the first time, Please go to Budgets <br />to set up your categories and budget amounts, like $1000 <br />for groceries.</p>
@@ -89,7 +89,7 @@ function Login() {
                   </div>
                 </div>
               </div>
-            <div className="col-4"></div>
+            <div className="col-sm-4"></div>
           </div>
         </div>
       </div>

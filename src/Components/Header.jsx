@@ -14,8 +14,7 @@ function Header({insideHome}) {
       await signOut(auth);
       alert("You have been logged out.");
       navigate("/")
-      // Optional: Redirect user after logout
-      // window.location.href = "/";
+      
     } catch (error) {
       console.error("Error logging out:", error);
       alert("Failed to log out. Try again.");
@@ -32,7 +31,7 @@ function Header({insideHome}) {
         <div className="col-9">
         <Navbar  expand="lg" variant="dark" className='ms-5'>
       <Container >
-        <Link to={'/home'} style={{textDecoration:'none'}}><Navbar.Brand ><img height={"29px"} width={"84px"} src={logo} alt="logo" style={{left:"0"}} /></Navbar.Brand></Link>
+        <Link to={'/home'} style={{textDecoration:'none'}}><Navbar.Brand style={{backgroundColor: "transparent"}} ><img height={"29px"} width={"84px"} src={logo} alt="logo" style={{left:"0"}} /></Navbar.Brand></Link>
       {insideHome&&(
         <>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />

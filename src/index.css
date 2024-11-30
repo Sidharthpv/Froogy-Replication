@@ -140,3 +140,62 @@
     flex-shrink: 0;
     white-space: nowrap;
 }
+
+
+@media (max-width: 768px) {
+    .login-background {
+        min-height: 100vh;
+        background-size: cover;
+    }
+
+    .login-contents {
+        margin-top: 20px;
+        padding: 20px;
+        font-size: 90%;
+    }
+
+    .login-contents h1 {
+        font-size: 36px;
+    }
+
+    .login-contents p {
+        font-size: 14px;
+        margin-top: 20px;
+    }
+
+    .login-button button {
+        font-size: 14px;
+        padding: 10px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-background {
+       
+        background-size: contain;
+    }
+
+    .login-contents h1 {
+        font-size: 28px;
+    }
+
+    .login-contents p {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .formInput {
+        width: 90%;
+    }
+
+    .login-button button {
+        width: 100%;
+        padding: 8px;
+    }
+
+   
+}
+
+
+

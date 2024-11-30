@@ -150,8 +150,11 @@ function AddExpense({userId}) {
     <>
 
     {/* input fields for adding new expense */}
-      <div className="container-fluid d-flex justify-content-center p-2">
-        <div className="container p-2 w-25 d-flex flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
+      <div className="row">
+        <div className="col-sm-4"></div>
+        <div className="col-sm-4 ps-5">
+        <div className="container-fluid  d-flex justify-content-center p-2">
+        <div className="container  p-2 w-25 d-flex flex-grow-1 flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
           <input class="form-control form-control-lg formInput text-light mb-3" id='Amount' value={expenseAmount} onChange={e=>setExpenseAmount(e.target.value)} type="text" placeholder="Amount"/>
           <select class="form-select form-select-lg " value={expenseCategory}  onChange={(e)=>setExpenseCategory(e.target.value)} style={{backgroundColor:'black',borderColor:'rgba(255,255,255,0.147)',borderWidth:'0.2px',width:'270px',height:'45px',borderRadius:'10px'}}>
           <option value="" disabled>Category</option>
@@ -172,6 +175,9 @@ function AddExpense({userId}) {
         </div>
       </div>
 
+        </div>
+        <div className="col-sm-4"></div>
+      </div>
     {/* displaying all the expenses */}
       <div className="container justify-content-center mb-5 ">
       {

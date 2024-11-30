@@ -168,8 +168,8 @@ function SetIncomeBudget({userId}) {
 
     {/* displaying salary, total budgeted and surplus */}
       <div className="row" style={{marginTop:'65px'}}>
-        <div className="col-3"></div>
-        <div className="col-3">
+        <div className="col-sm-3"></div>
+        <div className="col-sm-3">
           <h5 style={{color:'white'}}>Budget</h5>
           <div className="container align-self-center" style={{backgroundColor:'rgb(34, 36, 38)',padding:'15px',borderRadius:'10px',marginTop:'40px'}}>
             <p style={{backgroundColor:'transparent',color:'rgba(255, 255, 255, 0.315)'}}>Income</p>
@@ -190,7 +190,7 @@ function SetIncomeBudget({userId}) {
             </div>
           </div>
         </div>
-        <div className="col-3">
+        <div className="col-sm-3">
           <Link to={'/upcoming'} style={{textDecoration:'none'}}>
           <p className='text-end' style={{color:'rgba(255, 255, 255, 0.315)'}}>Upcoming payments</p>
           </Link>
@@ -199,30 +199,36 @@ function SetIncomeBudget({userId}) {
             <h5 style={{backgroundColor:'transparent',color:'white'}}>${totalBudgeted}</h5>
           </div>
         </div>
-        <div className="col-3"></div>
+        <div className="col-sm-3"></div>
       </div>
 
       <div className="row">
-        <div className="col-3"></div>
-        <div className="col-6">
+        <div className="col-sm-3"></div>
+        <div className="col-sm-6">
         <div className="container align-self-center" style={{backgroundColor:'rgb(34, 36, 38)',padding:'15px',borderRadius:'10px',marginTop:'20px'}}>
             <p style={{backgroundColor:'transparent',color:'rgba(255, 255, 255, 0.315)'}}>Surplus</p>
             <h5 style={{backgroundColor:'transparent',color:'white'}}>${surplus}</h5>
           </div>
         </div>
-        <div className="col-3"></div>
+        <div className="col-sm-3"></div>
       </div>
 
 
 {/* form for adding a new category */}
-      <div className="container-fluid d-flex justify-content-center p-2 ">
-        <div className="container p-2 w-25 d-flex flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
+      <div className="row">
+        <div className="col-sm-4"></div>
+        <div className="col-sm-4 d-flex justify-content-center ps-5">
+        <div className="container-fluid  d-flex justify-content-center p-2 ">
+        <div className="container  p-2 w-25 d-flex flex-grow-1 flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
           <input class="form-control form-control-lg formInput text-light mb-2" type="text" id='categoryName' onChange={e=>setCategoryName(e.target.value)} placeholder="Category name"/>
           <input class="form-control form-control-lg formInput text-light " type="text" id='budget' onChange={e=>setBudget(e.target.value)} placeholder="Budget amount"/>
-          <div className='action-button ' style={{backgroundColor:"transparent"}}>
+          <div className='action-button' style={{backgroundColor:"transparent"}}>
               <button onClick={addBudget} className='btn border border-1 ps-3 pe-3 pt-2 pb-2 mt-2' style={{width: "270px",height:'45px',borderRadius:'10px'}}>Add budget</button>
           </div>
         </div>
+      </div>
+        </div>
+        <div className="col-sm-4"></div>
       </div>
 
 
@@ -231,7 +237,7 @@ function SetIncomeBudget({userId}) {
         {
             categories.map((category)=>(
                 <div className="col w-50 m-auto d-flex flex-row justify-content-between  text-center p-2 border-bottom" style={{backgroundColor:'transparent'}}>
-                    <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent'}}>{category.name}</p>
+                    <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent'}} >{category.name}</p>
                     <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent'}} className='text-end'>${category.budget} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-trash" style={{color: "#ffffff",cursor:'pointer',opacity:'0.5'}} onClick={()=>deleteCategory(category.id,category.budget)}></i></p>
                 </div>
             ))
