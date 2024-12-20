@@ -87,11 +87,25 @@ function AllExpenses({userId}) {
       if(categorySnap.exists()){
         const currentSpent = categorySnap.data().spent || 0;
         const updatedSpent = currentSpent - amount;
-        await updateDoc(categoryRef,{spent: updatedSpent});
+        const budget = categorySnap.data().budget || 0;
+        const updatedPercentage = budget>0?((updatedSpent/budget)*100).toFixed(2) : 0;
+        console.log(updatedPercentage);
+        
+        await updateDoc(categoryRef,{spent: updatedSpent,percentage: updatedPercentage});
 
         console.log("updated the spent for the category: ",categoryId);
         
       }
+
+      //Updating the totalExpenses field
+      const userRef = doc(db,`users/${userId}`);
+      const userData = await getDoc(userRef);
+      if(userData.exists()){
+        const currentTotalExpenses = userData.data().totalExpenses || 0;
+        const updatedExpenses = currentTotalExpenses - amount;
+        await updateDoc(userRef,{totalExpenses: updatedExpenses})
+      }
+
       fetchExpenses();
     }
     catch(error){
@@ -107,45 +121,53 @@ function AllExpenses({userId}) {
     <>
     <div className='d-flex flex-column'>
       <div className="row ">
-        <div className="col-sm-2"></div>
-        <div className="col-sm-8 p-5 d-flex flex-column">
-            <h5 style={{color:'white'}} className='ms-5'>Expenses</h5>
-            <div className="container ps-5 pe-5 pb-5 pt-4">
+        <div className="col-sm-1"></div>
+        <div className="col-sm-10 p-0 mt-5 d-flex flex-column">
+            <h5 style={{color:'white',fontSize:'var(--H3)'}} className='ms-5'>Expenses</h5>
+            <div className="container ps-3 pe-3 pb-5 pt-4">
                 {
                   expensesArray.map((eachExpense)=>(
                     <div className='container  expenseBorder d-flex flex-row flex-shrink-1 justify-content-between  text-center'>
-                    <div className='d-flex  flex-row  justify-content-evenly p-2 ms-3'>
-                        <div className="d-flex flex-column me-5 flex-shrink-1">
-                            <p style={{color:'white',fontSize:'14px'}} className='m-0 '>{eachExpense.date}</p>
-                            <p style={{color:'rgba(255, 255, 255, 0.315)',fontSize:'12px'}} >{eachExpense.month}</p>
-                        </div>
-                        <div className="d-flex flex-column flex-shrink-1">
-                            <p style={{color:'white',fontSize:'14px'}} className='m-0 text-start '>{eachExpense.name}</p>
-                            <p style={{color:'rgba(255, 255, 255, 0.315)',fontSize:'14px'}} className='text-start'>{eachExpense.category}</p>
-                        </div>
+                      <div className='d-flex  flex-row  justify-content-evenly p-2 ms-3'>
+                          <div className="d-flex flex-column me-5 flex-shrink-1">
+                              <p style={{color:'white',fontSize:'var(--Body-Large)'}} className='m-0 '>{eachExpense.date}</p>
+                              <p style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)'}} >{eachExpense.month}</p>
+                          </div>
+                          <div className="d-flex flex-column flex-shrink-1">
+                              <p style={{color:'white',fontSize:'var(--Body-Medium)'}} className='m-0 text-start '>{eachExpense.name}</p>
+                              <p style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)'}} className='text-start'>{eachExpense.category}</p>
+                          </div>
+                      </div>
+                      <div className=' d-flex flex-row-reverse'>
+                          <div className='d-flex align-items-center'>
+                              <p style={{color:'white',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='text-end '>${eachExpense.amount} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onClick={()=>deleteExpense(eachExpense.id,eachExpense.categoryId,eachExpense.amount)} style={{marginTop:'-5px'}}>
+                                  <path fill-rule="evenodd" clip-rule="evenodd" d="M17 9H8L8 19H17V9ZM6 7V19C6 20.1046 6.89543 21 8 21H17C18.1046 21 19 20.1046 19 19V7H6Z" fill="#717171"/>
+                                  <path fill-rule="evenodd" clip-rule="evenodd" d="M20 6L5 6L5 4L20 4V6Z" fill="#717171"/>
+                                  <path d="M10 3L9 4H16L15 3H10Z" fill="#717171"/>
+                                </svg>
+                              </p>
+                          </div>
+                      </div>
                     </div>
-                    <div className=' d-flex flex-row-reverse'>
-                        <div className='d-flex align-items-center'>
-                            <p style={{color:'white',backgroundColor:'transparent',fontSize:'14px'}} className='text-end '>${eachExpense.amount} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class="fa-solid fa-trash" style={{color: "#ffffff",cursor:'pointer',opacity:'0.5'}} onClick={()=>deleteExpense(eachExpense.id,eachExpense.categoryId,eachExpense.amount)}></i></p>
-                        </div>
-                    </div>
-                </div>
                   ))
                 }
                     
                 
             </div>
         </div>
-        <div className="col-sm-2"></div>
+        <div className="col-sm-1"></div>
       </div>
 
-      <div className="container justify-content-center " style={{marginTop:'-100px'}} >
+      {/* <div className="container justify-content-center " style={{marginTop:'-100px'}} >
         <div className="container p-2 d-flex flex-row flex-wrap justify-content-start" style={{minHeight:'45px',width:'100%',backgroundColor:'rgba(102,102,102,1)',overflowX: 'auto'}}>
           
         
         </div>
+      </div> */}
       </div>
-      </div>
+
+       
     </>
   )
 }

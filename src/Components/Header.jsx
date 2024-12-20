@@ -27,11 +27,11 @@ function Header({insideHome}) {
 
     <>
       <div className="row">
-        <div className="col-1"></div>
-        <div className="col-9">
+        <div className="col-sm-1"></div>
+        <div className="col-sm-9">
         <Navbar  expand="lg" variant="dark" className='ms-5'>
-      <Container >
-        <Link to={'/home'} style={{textDecoration:'none'}}><Navbar.Brand style={{backgroundColor: "transparent"}} ><img height={"29px"} width={"84px"} src={logo} alt="logo" style={{left:"0"}} /></Navbar.Brand></Link>
+      <Container className='headerItems'>
+        <Link to={'/home'} style={{textDecoration:'none'}}><Navbar.Brand style={{backgroundColor: "transparent"}} className='headerLogo'><img height={"45px"} width={"120px"} src={logo} alt="logo" style={{left:"0"}} /></Navbar.Brand></Link>
       {insideHome&&(
         <>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -65,7 +65,7 @@ function Header({insideHome}) {
       </Container>
     </Navbar>
         </div>
-        <div className="col-2">
+        <div className="col-sm-2">
         <Navbar.Collapse id="basic-navbar-nav">
         <Nav className='ms-auto ' >
             <div className='logout-button' style={{backgroundColor:"transparent"}}>

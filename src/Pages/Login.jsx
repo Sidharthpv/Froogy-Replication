@@ -43,6 +43,8 @@ function Login() {
           email: user.email,
           salary:0,
           totalBudgeted:0,
+          totalSavings:0,
+          totalExpenses:0,
           photoURL: user.photoURL,
           createdAt,
         });
