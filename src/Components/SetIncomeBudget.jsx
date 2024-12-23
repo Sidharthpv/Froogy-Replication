@@ -3,6 +3,8 @@ import { doc, collection, setDoc, getDoc, updateDoc, getDocs, deleteDoc } from "
 import { db } from '../firebase';
 import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { FadeLoader } from 'react-spinners'
+
 
 function SetIncomeBudget({userId}) {
    
@@ -12,7 +14,7 @@ function SetIncomeBudget({userId}) {
     const handleShow = () => setShow(true);
 
     const[categoryName,setCategoryName] = useState("")
-    const[budget,setBudget] = useState(0)
+    const[budget,setBudget] = useState("")
     const[totalBudgeted,setTotalBudgeted] = useState(0)
     const[totalSavings,setTotalSavings] = useState(0)
     const[totalExpenses,setTotalExpenses] = useState(0)
@@ -20,6 +22,10 @@ function SetIncomeBudget({userId}) {
     const[surplus,setSurplus] = useState(0)
     const[categories,setCategories] = useState([])
     const[expSave,setExpSave] = useState("expenses")
+    const[isDisabled, setIsDisabled] = useState(false);
+
+    const[loading,setLoading] = useState(false)
+    
 
     useEffect(() => {
 
@@ -89,12 +95,14 @@ function SetIncomeBudget({userId}) {
         }
         
         handleClose();
+        
     }
 // ----------------------------------------------------------------------------
 
 
 //-------------------- function for adding a new category and the budget for it--------------------
     const addBudget = async () => {
+      setLoading(true)
         // e.preventDefault();
     
         if (!categoryName || budget <= 0) {
@@ -135,7 +143,7 @@ function SetIncomeBudget({userId}) {
           else{
             // Add new savings
             const savingsRef = doc(collection(db,`users/${userId}/savings`));
-            await setDoc(savingsRef,{name: categoryName, amount: Number(budget)});
+            await setDoc(savingsRef,{name: categoryName, amount: Number(budget), timestamp: new Date()});
 
             // Get current total savings value
             const userRef = doc(db,`users/${userId}`);
@@ -156,6 +164,7 @@ function SetIncomeBudget({userId}) {
             console.log("savings added successfully");
             
           }
+         
             
           
         } catch (error) {
@@ -165,30 +174,48 @@ function SetIncomeBudget({userId}) {
         // Reset form fields
         setCategoryName("");
         setBudget("");
+        setLoading(false)
       };
 // ---------------------------------------------------------------------------------------
 
 
 // -------------------function for deleting a category from the database----------------------
       const deleteCategory = async (categoryId, categoryBudget) => {
+        setLoading(true)
         try {
-            // Step 1: Delete category from Firestore
+            setIsDisabled(true)
+            // Delete category from Firestore
             const categoryRef = doc(db, `users/${userId}/categories/${categoryId}`);
+            const categorySnap = await getDoc(categoryRef)
+
+            if (!categorySnap.exists()) {
+              console.error("Category does not exist");
+              return;
+            }
+            
+            const currentSpent = categorySnap.data().spent
+            
             await deleteDoc(categoryRef);
 
-            // Step 2: Update totalBudgeted in Firestore
+            // Update totalBudgeted in Firestore
             const userRef = doc(db, `users/${userId}`);
+            const userDoc = await getDoc(userRef)
             const newTotalBudgeted = totalBudgeted - categoryBudget;
-            await updateDoc(userRef, { totalBudgeted: newTotalBudgeted });
+            const currentTotalExpenses = userDoc.data().totalExpenses || 0
+            const newTotalExpenses = currentTotalExpenses - currentSpent
+            await updateDoc(userRef, { totalBudgeted: newTotalBudgeted, totalExpenses: newTotalExpenses });
 
-            // Step 3: Update local state
+            // Update local state
             setCategories(categories.filter((category) => category.id !== categoryId));
             setTotalBudgeted(newTotalBudgeted);
+            setTotalExpenses(newTotalExpenses)
             setSurplus(salary - newTotalBudgeted);
+            setIsDisabled(false)
             console.log("Category deleted successfully");
         } catch (error) {
             console.error("Error deleting category:", error);
         }
+        setLoading(false)
     };
 // ------------------------------------------------------------------------------------------------
     
@@ -199,14 +226,20 @@ function SetIncomeBudget({userId}) {
 
     <>
     
-    <div style={{backgroundColor:'#222'}}>
+    <div style={{backgroundColor:'#222',width:'100%',paddingRight:'0'}}>
     {/* displaying salary, total budgeted and surplus */}
-      <div className="row" style={{marginTop:'65px'}}>
-        {/* <div className="col-sm-1"></div> */}
-        <div className="col-6 tile-column-left">
-          <h5 style={{color:'white',fontSize:'var(--H3)'}}>Budget</h5>
+      <div className="row mt-5"  style={{padding:'0'}}>
+        <div className="col-1"></div>
+        <div className="col-10" style={{margin:'0',padding:'0'}}>
+          <h5 style={{color:'white',fontSize:'var(--H3)',marginTop:'-8px'}}>Budget</h5>
+        </div>
+        <div className="col-1"></div>
+      </div>
+      <div className="row" style={{padding:'0'}}>
+        <div className="col-1"></div>
+        <div className="col-10  d-flex flex-row" style={{margin:'0',paddingLeft:'34px',paddingRight:'34px',width:'100%'}}>
 
-          <div className="container align-self-center tile" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',marginTop:'33px',width:'182px',height:'114px'}}>
+          <div className="container align-self-center tile  flex-shrink-1 flex-grow-1" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',marginTop:'33px',width:'182px',height:'114px',marginRight:'16px'}}>
             <p style={{backgroundColor:'transparent',color:'var(--Grey-300)',fontSize:'var(--Body-Small)'}}>Income</p>
             <div className='d-flex flex-row ' style={{backgroundColor:'transparent',marginTop:'30px'}}>
               <h5 style={{backgroundColor:'transparent',color:'white'}}>${salary}</h5>
@@ -229,20 +262,7 @@ function SetIncomeBudget({userId}) {
             </div>
           </div>
 
-          <div className="container align-self-center tile" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',width:'182px',height:'114px'}}>
-            <p style={{backgroundColor:'transparent',color:'var(--Grey-300)',fontSize:'var(--Body-Small)'}}>Savings</p>
-            <div className='d-flex flex-row ' style={{backgroundColor:'transparent',marginTop:'30px'}}>
-              <h5 style={{backgroundColor:'transparent',color:'white'}}>${totalSavings}</h5>
-              <p style={{color:'var(--Grey-500)',backgroundColor:'transparent',marginLeft:'10px'}}>{totalSavings>0?Math.trunc(((totalSavings/salary)*100)):0}%</p>
-            </div>
-          </div>
-        
-        </div>
-        <div className="col-6 tile-column-right">
-          {/* <Link to={'/upcoming'} style={{textDecoration:'none'}}>
-          <p className='text-end' style={{color:'rgba(255, 255, 255, 0.315)'}}>Upcoming payments</p>
-          </Link> */}
-          <div className="container align-self-center tile" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',marginTop:'62px',width:'182px',height:'114px'}}>
+          <div className="container align-self-center tile flex-shrink-1 flex-grow-1" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',marginTop:'32px',width:'182px',height:'114px',marginBottom:'20px'}}>
             <p style={{backgroundColor:'transparent',color:'var(--Grey-300)',fontSize:'var(--Body-Small)'}}>Expenses</p>
             <div className='d-flex flex-row ' style={{backgroundColor:'transparent',marginTop:'30px'}}>
               <h5 style={{backgroundColor:'transparent',color:'white'}}>${totalExpenses}</h5>
@@ -250,7 +270,28 @@ function SetIncomeBudget({userId}) {
             </div>
           </div>
 
-          <div className="container align-self-center tile" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',width:'182px',height:'114px'}}>
+          
+        
+        </div>
+        <div className="col-1"></div>
+      </div>
+
+      <div className="row" style={{padding:'0'}}>
+        <div className="col-1"></div>
+        <div className="col-10 d-flex flex-row justify-content-center" style={{margin:'0',paddingLeft:'34px',paddingRight:'34px',width:'100%'}}>
+          {/* <Link to={'/upcoming'} style={{textDecoration:'none'}}>
+          <p className='text-end' style={{color:'rgba(255, 255, 255, 0.315)'}}>Upcoming payments</p>
+          </Link> */}
+          
+          <div className="container align-self-center tile flex-shrink-1 flex-grow-1" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',width:'182px',height:'114px',marginRight:'16px'}}>
+            <p style={{backgroundColor:'transparent',color:'var(--Grey-300)',fontSize:'var(--Body-Small)'}}>Savings</p>
+            <div className='d-flex flex-row ' style={{backgroundColor:'transparent',marginTop:'30px'}}>
+              <h5 style={{backgroundColor:'transparent',color:'white'}}>${totalSavings}</h5>
+              <p style={{color:'var(--Grey-500)',backgroundColor:'transparent',marginLeft:'10px'}}>{totalSavings>0?Math.trunc(((totalSavings/salary)*100)):0}%</p>
+            </div>
+          </div>
+
+          <div className="container align-self-center tile flex-shrink-1 flex-grow-1" style={{backgroundColor:'#222',padding:'15px',borderRadius:'10px',width:'182px',height:'114px'}}>
             <p style={{backgroundColor:'transparent',color:'var(--Grey-300)',fontSize:'var(--Body-Small)'}}>Surplus</p>
             <div className='d-flex flex-row ' style={{backgroundColor:'transparent',marginTop:'30px'}}>
               <h5 style={{backgroundColor:'transparent',color:'white'}}>${salary-(totalExpenses+totalSavings)}</h5>
@@ -258,50 +299,50 @@ function SetIncomeBudget({userId}) {
             </div>
           </div>
         </div>
+        <div className="col-1"></div>
       </div>
 
 
       </div>
 
       
-
-     <div style={{backgroundColor:'black',width:'100%'}}>
+     <div className='container ' style={{backgroundColor:'black',width:'100vw',margin:'0',padding:'0'}}>
 
 {/* form for adding a new category */}
-      <div className="row" style={{width:'100%'}}>
+      <div className="row top-container" style={{width:'100vw',backgroundColor:'black'}}>
         <div className="col-sm-1"></div>
         <div className="col-sm-10 d-flex justify-content-center " style={{width:'100%',backgroundColor:'black',paddingRight:'0',paddingLeft:'0'}}>
-          <div className="container-fluid  d-flex justify-content-center  " style={{backgroundColor:'black'}}>
-            <div className="container  p-2 w-25 d-flex flex-grow-1 flex-column justify-content-center input-wrapper" style={{marginTop:'30px',backgroundColor:'black',paddingLeft:'0',paddingRight:'0'}}>
-              <input class="form-control form-control-lg formInput text-light mb-4" type="text" id='categoryName' onChange={e=>setCategoryName(e.target.value)} placeholder="Category name" style={{marginLeft:'15px',marginRight:'10px',width:'100%',backgroundColor:'black'}}/>
+          <div className="container-fluid  d-flex justify-content-center  " style={{backgroundColor:'black',width:'100%'}}>
+            <div className="container  p-2 w-25 d-flex flex-grow-1 flex-column justify-content-center input-wrapper" style={{marginTop:'30px',backgroundColor:'black',paddingLeft:'0',paddingRight:'0',marginRight:'7px'}}>
+              <input class="form-control form-control-lg formInput text-light mb-4" type="text" id='categoryName' onChange={e=>setCategoryName(e.target.value)} value={categoryName} placeholder="Category name" style={{marginLeft:'15px',marginRight:'15px',width:'100%',backgroundColor:'black'}}/>
 
               <div className='d-flex flex-row mb-4' style={{backgroundColor:'black',marginLeft:'15px'}}>
                 <div class="form-check me-4" style={{backgroundColor:'black'}}>
-                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked style={{backgroundColor:'transparent'}} onChange={()=>setExpSave("expenses")}/>
-                    <label class="form-check-label" for="flexRadioDefault1" style={{backgroundColor:'black'}}>Expenses</label>
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked={expSave === 'expenses'} style={{backgroundColor:'transparent',width:'18px',height:'18px'}} onChange={()=>setExpSave("expenses")}/>
+                    <label class="form-check-label" for="flexRadioDefault1" style={{backgroundColor:'black',fontSize:'var(--Body-Medium)'}}>Expenses</label>
                 </div>
                 <div className='form-check' style={{backgroundColor:'black'}}>
-                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" style={{backgroundColor:'transparent'}} onChange={()=>setExpSave("savings")}/>
-                    <label class="form-check-label" for="flexRadioDefault2" style={{backgroundColor:'black'}}>Savings</label>
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" checked={expSave === 'savings'} style={{backgroundColor:'transparent',width:'18px',height:'18px'}} onChange={()=>setExpSave("savings")}/>
+                    <label class="form-check-label" for="flexRadioDefault2" style={{backgroundColor:'black',fontSize:'var(--Body-Medium)'}}>Savings</label>
                 </div>
               </div>
 
-              <input class="form-control form-control-lg formInput text-light mb-2" type="text" id='budget' onChange={e=>setBudget(e.target.value)} placeholder="Budget amount"  style={{marginLeft:'15px',marginRight:'10px',width:'100%',backgroundColor:'black'}}/>
+              <input class="form-control form-control-lg formInput text-light mb-2" type="text" id='budget' onChange={e=>setBudget(e.target.value)} value={budget} placeholder="Budget amount"  style={{marginLeft:'15px',marginRight:'10px',width:'100%',backgroundColor:'black'}}/>
               <div className='action-button' style={{backgroundColor:"transparent",paddingLeft:'0',paddingRight:'0'}}>
                   <button onClick={addBudget} className='btn ps-3 pe-3 pt-2 pb-2 mt-2' style={{width: "100%",height:'45px',borderRadius:'30px',marginLeft:'15px'}}>Add budget</button>
               </div>
             </div>
           </div>
         </div>
-        <div className="col-sm-1" style={{backgroundColor:'black',marginRight:'0'}}></div>
+        <div className="col-sm-1" ></div>
       </div>
 
 
 
 {/* displaying the existing categories */}
-      <div className="row d-flex flex-column  " style={{backgroundColor:'black'}}>
+      <div className="row d-flex flex-column  " style={{backgroundColor:'black',marginRight:'0'}}>
         <div className="col-sm-1"></div>
-        <div className="col-sm-10 budgetCategory" style={{backgroundColor:'black'}}>
+        <div className="col-sm-12 budgetCategory" style={{backgroundColor:'black'}}>
             <div className="container p-2 " style={{backgroundColor:'transparent'}}>
               <hr style={{color:'#222',height:'3px',marginTop:'-15px'}}/>
             </div>
@@ -310,7 +351,7 @@ function SetIncomeBudget({userId}) {
                 <div className="col w-50 m-auto d-flex flex-row justify-content-between  text-center p-2 " style={{backgroundColor:'transparent',width:'100%'}}>
                     <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} >{category.name}</p>
                     <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='text-end'>${category.budget} &nbsp;&nbsp;&nbsp;&nbsp; <span style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)',backgroundColor:'transparent'}}>{Math.trunc(((category.budget/salary)*100))}%</span> &nbsp;&nbsp;&nbsp;&nbsp;
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{color: "var(--Grey-500)",cursor:'pointer',opacity:'0.5',backgroundColor:'transparent',marginTop:'-5px'}} onClick={()=>deleteCategory(category.id,category.budget)}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{color: "var(--Grey-500)",cursor:'pointer',opacity:'0.5',backgroundColor:'transparent',marginTop:'-5px'}} onClick={!isDisabled?()=>deleteCategory(category.id,category.budget):null} >
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M17 9H8L8 19H17V9ZM6 7V19C6 20.1046 6.89543 21 8 21H17C18.1046 21 19 20.1046 19 19V7H6Z" fill="#717171"/>
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M20 6L5 6L5 4L20 4V6Z" fill="#717171"/>
                         <path d="M10 3L9 4H16L15 3H10Z" fill="#717171"/>
@@ -325,6 +366,19 @@ function SetIncomeBudget({userId}) {
 
 
       </div> 
+
+
+        {
+            loading&&(
+                <div className='spinner'>
+                    <FadeLoader color='var(--Primary-400)' />
+                </div>
+            )
+
+        }
+
+
+
     </>
   )
 }

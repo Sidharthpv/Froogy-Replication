@@ -61,7 +61,7 @@ function SpecificCategory({userId}) {
 
   return (
     <>
-      <div className="row ">
+      {/* <div className="row ">
         <div className="col-2"></div>
         {expenses.length>0?(
         <div className="col-8 p-5 d-flex flex-column">
@@ -94,7 +94,59 @@ function SpecificCategory({userId}) {
         </div>
         ): <div className='col-8'></div>}
         <div className="col-2"></div>
+      </div> */}
+
+<div className='d-flex flex-column'>
+      <div className="row ">
+        <div className="col-sm-1"></div>
+        {expenses.length>0?(
+            <div className="col-sm-10 p-0 mt-5 d-flex flex-column">
+                <h5 style={{color:'white',fontSize:'var(--H3)'}} className='ms-5'>{expenses[0].category}</h5>
+                <div className="container ps-3 pe-3 pb-5 pt-4">
+                    {
+                        expenses.map((expense)=>(
+                            <div className='container  expenseBorder d-flex flex-row flex-shrink-1 justify-content-between  text-center'>
+                                <div className='d-flex  flex-row  justify-content-evenly p-2 ms-3'>
+                                    <div className="d-flex flex-column me-5 flex-shrink-1">
+                                        <p style={{color:'white',fontSize:'var(--Body-Large)'}} className='m-0 '>{expense.date}</p>
+                                        <p style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)'}} >{expense.month}</p>
+                                    </div>
+                                    <div className="d-flex flex-column flex-shrink-1">
+                                        <p style={{color:'white',fontSize:'var(--Body-Medium)'}} className='m-0 text-start '>{expense.name}</p>
+                                        {/* <p style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)'}} className='text-start'>{eachExpense.category}</p> */}
+                                    </div>
+                                </div>
+                                <div className=' d-flex flex-row-reverse'>
+                                    <div className='d-flex pt-2'>
+                                        <p style={{color:'white',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='text-end '>${expense.amount} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        {/* <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onClick={()=>deleteExpense(eachExpense.id,eachExpense.categoryId,eachExpense.amount)} style={{marginTop:'-5px'}}>
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M17 9H8L8 19H17V9ZM6 7V19C6 20.1046 6.89543 21 8 21H17C18.1046 21 19 20.1046 19 19V7H6Z" fill="#717171"/>
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M20 6L5 6L5 4L20 4V6Z" fill="#717171"/>
+                                            <path d="M10 3L9 4H16L15 3H10Z" fill="#717171"/>
+                                        </svg> */}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    }
+                    
+                
+                </div>
+            </div>
+        ): <div className="col-sm-10"></div>}
+        <div className="col-sm-1"></div>
       </div>
+
+      {/* <div className="container justify-content-center " style={{marginTop:'-100px'}} >
+        <div className="container p-2 d-flex flex-row flex-wrap justify-content-start" style={{minHeight:'45px',width:'100%',backgroundColor:'rgba(102,102,102,1)',overflowX: 'auto'}}>
+          
+        
+        </div>
+      </div> */}
+      </div>
+        
+        
     </>
   )
 }

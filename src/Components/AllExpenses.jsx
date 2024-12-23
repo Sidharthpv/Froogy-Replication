@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc } from "firebase/firestore";
 import { db } from '../firebase'
+import { FadeLoader } from 'react-spinners'
+
 
 function AllExpenses({userId}) {
   console.log("userId in AllExpenses:", userId);
   console.log("AllExpenses component rendered");
   
   const[expensesArray,setExpensesArray]=useState([])
+  const[isDisabled, setIsDisabled] = useState(false);
+  const[loading,setLoading] = useState(false)
+  
+  
 
 
   useEffect(()=>{
@@ -55,6 +61,7 @@ function AllExpenses({userId}) {
             month: month,
             name: expenseData.name,
             amount: expenseData.amount,
+            timestamp: dateObj,
             category: categoryname
           });
           
@@ -62,6 +69,9 @@ function AllExpenses({userId}) {
         
         
       }
+
+      // Sorting the expenses
+      fetchedExpenses.sort((a,b)=>b.timestamp - a.timestamp)
       
       console.log("Final fetched expenses:", fetchedExpenses);
       setExpensesArray(fetchedExpenses)
@@ -77,7 +87,9 @@ function AllExpenses({userId}) {
 
 // -----------------------------function for deleting an expense from the database-------------------------
   const deleteExpense  =async(expenseId, categoryId, amount)=>{
+    setLoading(true)
     try{
+      setIsDisabled(true)
       //deleting the expense
       await deleteDoc(doc(db,`users/${userId}/categories/${categoryId}/expenses/${expenseId}`));
       
@@ -107,11 +119,13 @@ function AllExpenses({userId}) {
       }
 
       fetchExpenses();
+      setIsDisabled(false);
     }
     catch(error){
       console.log("error deleting the expense: ",error);
       
     }
+    setLoading(false)
   };
 // ----------------------------------------------------------------------------------------------
 
@@ -119,16 +133,16 @@ function AllExpenses({userId}) {
 
   return (
     <>
-    <div className='d-flex flex-column'>
-      <div className="row ">
+    <div className='d-flex flex-column' style={{padding:'0',margin:'0'}}>
+      <div className="row " style={{padding:'0',margin:'0'}}>
         <div className="col-sm-1"></div>
-        <div className="col-sm-10 p-0 mt-5 d-flex flex-column">
-            <h5 style={{color:'white',fontSize:'var(--H3)'}} className='ms-5'>Expenses</h5>
-            <div className="container ps-3 pe-3 pb-5 pt-4">
+        <div className="col-sm-10  mt-5 d-flex flex-column" style={{margin:'0',paddingLeft:'0',paddingRight:'0'}}>
+            <h5 style={{color:'white',fontSize:'var(--H3)',margin:'0',paddingLeft:'24px'}} >Expenses</h5>
+            <div className="container  pb-5 pt-4" style={{margin:'0',paddingLeft:'0',paddingRight:'0'}}>
                 {
                   expensesArray.map((eachExpense)=>(
                     <div className='container  expenseBorder d-flex flex-row flex-shrink-1 justify-content-between  text-center'>
-                      <div className='d-flex  flex-row  justify-content-evenly p-2 ms-3'>
+                      <div className='d-flex  flex-row  justify-content-evenly p-2 ms-2'>
                           <div className="d-flex flex-column me-5 flex-shrink-1">
                               <p style={{color:'white',fontSize:'var(--Body-Large)'}} className='m-0 '>{eachExpense.date}</p>
                               <p style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)'}} >{eachExpense.month}</p>
@@ -141,7 +155,7 @@ function AllExpenses({userId}) {
                       <div className=' d-flex flex-row-reverse'>
                           <div className='d-flex align-items-center'>
                               <p style={{color:'white',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='text-end '>${eachExpense.amount} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onClick={()=>deleteExpense(eachExpense.id,eachExpense.categoryId,eachExpense.amount)} style={{marginTop:'-5px'}}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" onClick={!isDisabled ? ()=>deleteExpense(eachExpense.id,eachExpense.categoryId,eachExpense.amount) : null} style={{marginTop:'-5px'}}>
                                   <path fill-rule="evenodd" clip-rule="evenodd" d="M17 9H8L8 19H17V9ZM6 7V19C6 20.1046 6.89543 21 8 21H17C18.1046 21 19 20.1046 19 19V7H6Z" fill="#717171"/>
                                   <path fill-rule="evenodd" clip-rule="evenodd" d="M20 6L5 6L5 4L20 4V6Z" fill="#717171"/>
                                   <path d="M10 3L9 4H16L15 3H10Z" fill="#717171"/>
@@ -166,6 +180,17 @@ function AllExpenses({userId}) {
         </div>
       </div> */}
       </div>
+
+
+        {
+            loading&&(
+                <div className='spinner'>
+                    <FadeLoader color='var(--Primary-400)' />
+                </div>
+            )
+
+        }
+
 
        
     </>

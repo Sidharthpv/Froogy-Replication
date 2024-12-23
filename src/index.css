@@ -45,10 +45,17 @@
     background-color: var(--Grey-900);
 }
 
-/* body{
-    background-image: linear-gradient(to bottom right, var(--Grey-900),var(--Grey-800));
+html{
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
 
-} */
+body{
+    background-color: black;
+    margin: 0;
+    padding: 0;
+}
 
 .login-background{
     
@@ -153,8 +160,8 @@
 .formInput::placeholder{
     color: var(--Grey-300);
     opacity: 0.7;
-    font-weight: lighter;
-    font-size: 15px;
+    /* font-weight: lighter; */
+    font-size: var(--Body-Medium);
     
     
 }
@@ -168,8 +175,8 @@
     background-color: var(--Grey-900);
     border-color: var(--Grey-500);
     /* font-weight: lighter; */
-    font-size: 15px;
-    opacity: 0.6;
+    font-size: var(--Body-Medium);
+    opacity: 0.7;
     border-radius: 5px !important;
 }
 
@@ -203,6 +210,24 @@
     flex-grow: 0;
     flex-shrink: 0;
     white-space: nowrap;
+}
+
+.top-container{
+    width: 100% !important;
+    margin-right: 30px;
+}
+
+.spinner{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
 }
 
 
@@ -243,16 +268,18 @@
     .expenseForm  {
       padding: 0;
       margin-left: 0;
+      margin-right: 0;
       margin-top: 0;
       margin-bottom: 0;
       /* margin-right: 10px;   */
       width: 100%;
-      padding-left: 14px !important; 
-      /* padding-right: 24px !important; */
+      padding-left: 24px !important; 
+      padding-right: 24px !important;
     }
 
     .input-wrapper{
         width: 100% !important;
+        /* margin-right: 30px !important; */
     }
   
     .expenseForm .formInput, 
@@ -268,8 +295,8 @@
     .homeExpense {
         width: 100% !important; /* Ensure the container takes full width */
         
-        padding-left: 14px !important;
-        padding-right: 0px !important;
+        padding-left: 24px !important;
+        padding-right: 24px !important;
       }
 
     
@@ -284,14 +311,14 @@
     }
 
 
-   .tile-column-left{
+   /* .tile-column-left{
     padding-left: 38px !important;
     
-   }
+   } */
 
-   .tile-column-right{
+   /* .tile-column-right{
     padding-right: 31px !important;
-   }
+   } */
 
    .tile{
     margin-bottom: 22px;
@@ -321,6 +348,18 @@
     margin-left: 0 !important;
     margin-right: 0 !important;
    }
+
+   /* .top-container{
+    margin-left: 10px !important;
+    padding-right: 0 !important;
+    position: relative;
+    padding-left: 0;
+   } */
+
+   
+
+
+  
 
     
   }

@@ -9,6 +9,7 @@ import Budget from './Pages/Budget'
 import Expenses from './Pages/Expenses'
 import UpcomingPayments from './Pages/UpcomingPayments'
 import ViewACategory from './Pages/ViewACategory'
+import Savings from './Pages/Savings'
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
         <Route path='/home' element={<Home/>}/>
         <Route path='/budget' element={<Budget/>}/>
         <Route path='/expenses' element={<Expenses/>}/>
+        <Route path='/savings' element={<Savings/>}/>
         <Route path='/upcoming' element={<UpcomingPayments/>}/>
         <Route path='/categories/:categoryId' element={<ViewACategory/>}/>
       </Routes>

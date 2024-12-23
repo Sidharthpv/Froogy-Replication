@@ -19,11 +19,15 @@ function Login() {
 
   const navigate = useNavigate();
 
-  useEffect(()=>{
-    if(user){
-      navigate("/home")
-    }
-  },[user])
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        navigate("/home");
+      }
+    });
+    return () => unsubscribe(); // Cleanup on unmount
+  }, []);
+  
 
   //create user document for first time login
   const createUserDoc = async(user)=>{

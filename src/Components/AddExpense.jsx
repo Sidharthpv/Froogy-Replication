@@ -2,6 +2,7 @@ import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/fi
 import React, { useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { Link } from 'react-router-dom'
+import { FadeLoader } from 'react-spinners'
 
 function AddExpense({userId}) {
 
@@ -11,6 +12,8 @@ function AddExpense({userId}) {
     const[expenseName,setExpenseName] = useState("")
     const[upcomingPayments,setUpcomingPayments] = useState([])
     const[dateOption,setDateOption] = useState("today")
+
+    const[loading,setLoading] = useState(false)
 
 
     //---------------fetching all the categories in the database----------------------
@@ -41,6 +44,8 @@ function AddExpense({userId}) {
 
 // --------------------------function for adding a new expense-----------------------------
     const handleAddExpense = async()=>{
+        setLoading(true)
+
         console.log("Expense Name:", expenseName);
         console.log("Expense Amount:", expenseAmount);
         console.log("Expense Category:", expenseCategory);
@@ -101,6 +106,7 @@ function AddExpense({userId}) {
             setExpenseName("");
             setExpenseCategory("");
             fetchCategories1();
+            setLoading(false)
         }
         catch(error){
             console.log("error adding expense:",error);
@@ -167,16 +173,16 @@ function AddExpense({userId}) {
     {/* input fields for adding new expense */}
       <div className="row " style={{marginTop:'-30px'}}>
         <div className="col-sm-1 col-md-4"></div>
-        <div className="col-sm-10 col-md-4 expenseForm ps-5">
+        <div className="col-sm-10 col-md-4 expenseForm ps-5" style={{padding:'0',marginLeft:'0',marginRight:'0'}}>
             <div className="container-fluid  d-flex justify-content-center p-2">
                 <div className="container  p-2 w-25 d-flex flex-grow-1 flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
                     <div className='d-flex flex-row mb-3 expense-wrapper'>
                         <div class="form-check me-4 ">
-                            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked style={{backgroundColor:'transparent'}} onChange={()=>setDateOption("today")}/>
+                            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked={dateOption === "today"} style={{backgroundColor:'transparent'}} onChange={()=>setDateOption("today")}/>
                             <label class="form-check-label" for="flexRadioDefault1">Today</label>
                         </div>
                         <div className='form-check'>
-                            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" style={{backgroundColor:'transparent'}} onChange={()=>setDateOption("yesterday")}/>
+                            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" checked={dateOption === "yesterday"} style={{backgroundColor:'transparent'}} onChange={()=>setDateOption("yesterday")}/>
                             <label class="form-check-label" for="flexRadioDefault2">Yesterday</label>
                         </div>
                     </div>
@@ -194,6 +200,9 @@ function AddExpense({userId}) {
                     }
                     </select>
                     <input class="form-control form-control-lg formInput text-light mt-3" id='expenseName' value={expenseName} onChange={e=>setExpenseName(e.target.value)} type="text" placeholder="Expense name"/>
+
+                    
+
                     <div className='action-button ' style={{backgroundColor:"transparent"}}>
                         <button className='btn  ps-3 pe-3 pt-2 pb-2 mt-3' onClick={handleAddExpense} style={{width: "270px",height:'45px',borderRadius:'30px'}}>Add expense</button>
                     </div>
@@ -211,14 +220,14 @@ function AddExpense({userId}) {
             <Link to={`/categories/${category.id}`} style={{textDecoration:'none'}}>
                 <div className="homeExpense row w-100 d-flex flex-row justify-content-center" style={{backgroundColor:'transparent',marginBottom:'-60px'}}>
                     <div className="col-sm-1"></div>
-                    <div className="col-sm-10 d-flex flex-row ">
+                    <div className="col-sm-10 d-flex flex-row " style={{marginLeft:'0',marginRight:'0',padding:'0'}}>
                         <div className="col d-flex flex-column flex-grow-1 justify-content-start rounded-start text-align-center p-2" style={{backgroundColor:'#222'}}>
                             <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 mt-2'>{category.name}</p>
                             <h5 style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}}>${category.budget}</h5>
                         </div>
                         <div className="col d-flex flex-column flex-grow-1 justify-content-end text-end p-2 text-align-center rounded-end" style={{backgroundColor:'#222',marginRight:'-20px'}}>
                             <h5 style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 mt-2'>${category.spent}</h5>
-                            <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}}>{Math.trunc(category.percentage)}%</p>
+                            <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}}>{category.percentage>0 ? Math.trunc(category.percentage) : 0}%</p>
                         </div>
                     </div>
                     <div className="col-sm-1"></div>
@@ -255,8 +264,16 @@ function AddExpense({userId}) {
             <div className="col-1"></div>
         </div> */}
 
+        {
+            loading&&(
+                <div className='spinner'>
+                    <FadeLoader color='var(--Primary-400)' />
+                </div>
+            )
 
-      
+        }
+
+
     </>
   )
 }
