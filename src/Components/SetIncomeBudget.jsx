@@ -31,6 +31,7 @@ function SetIncomeBudget({userId}) {
 
         // fetch all existing category details
         const fetchCategories = async () => {
+          setLoading(true)
             try{
                 const categoriesRef = collection(db,`users/${userId}/categories`);
                 const categoriesSnap = await getDocs(categoriesRef);
@@ -45,7 +46,7 @@ function SetIncomeBudget({userId}) {
                 console.log("error fetching category list:",error);
                 
             }
-
+            setLoading(false)
         }
         
 

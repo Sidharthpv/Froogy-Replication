@@ -18,6 +18,7 @@ function AddExpense({userId}) {
 
     //---------------fetching all the categories in the database----------------------
     const fetchCategories1 = async () => {
+        setLoading(true)
         try{
             const categories1Ref = collection(db,`users/${userId}/categories`);
             const categoriesSnap1 = await getDocs(categories1Ref);
@@ -33,6 +34,7 @@ function AddExpense({userId}) {
             console.log("error fetching categories:", error);
             
         }
+        setLoading(false)
     }
 // -------------------------------------------------------------------------------
 
@@ -79,11 +81,11 @@ function AddExpense({userId}) {
             const expenseRef = doc(collection(categoryRef,"expenses"));
 
             const currentDate = new Date();
-            const expenseDate = dateOption === "today" ? currentDate : new Date(currentDate.setDate(currentDate.getDate()-1))
+            // const expenseDate = dateOption === "today" ? currentDate : new Date(currentDate.setDate(currentDate.getDate()-1))
             await setDoc(expenseRef,{
                 name: expenseName,
                 amount: Number(expenseAmount),
-                timestamp: expenseDate,
+                timestamp: currentDate,
             });
 
             // updating the spent field in the category and updating percentage
@@ -176,7 +178,7 @@ function AddExpense({userId}) {
         <div className="col-sm-10 col-md-4 expenseForm ps-5" style={{padding:'0',marginLeft:'0',marginRight:'0'}}>
             <div className="container-fluid  d-flex justify-content-center p-2">
                 <div className="container  p-2 w-25 d-flex flex-grow-1 flex-column justify-content-center input-wrapper" style={{marginTop:'60px'}}>
-                    <div className='d-flex flex-row mb-3 expense-wrapper'>
+                    {/* <div className='d-flex flex-row mb-3 expense-wrapper'>
                         <div class="form-check me-4 ">
                             <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked={dateOption === "today"} style={{backgroundColor:'transparent'}} onChange={()=>setDateOption("today")}/>
                             <label class="form-check-label" for="flexRadioDefault1">Today</label>
@@ -185,7 +187,7 @@ function AddExpense({userId}) {
                             <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" checked={dateOption === "yesterday"} style={{backgroundColor:'transparent'}} onChange={()=>setDateOption("yesterday")}/>
                             <label class="form-check-label" for="flexRadioDefault2">Yesterday</label>
                         </div>
-                    </div>
+                    </div> */}
                     <input class="form-control form-control-lg formInput text-light mb-3" id='Amount' value={expenseAmount} onChange={e=>setExpenseAmount(e.target.value)} type="text" placeholder="Amount"/>
                     <select class="form-select form-select-lg " value={expenseCategory}  onChange={(e)=>setExpenseCategory(e.target.value)} style={{borderWidth:'0.2px',width:'270px',height:'45px',borderRadius:'10px'}}>
                     <option value="" disabled>Category</option>
@@ -221,13 +223,13 @@ function AddExpense({userId}) {
                 <div className="homeExpense row w-100 d-flex flex-row justify-content-center" style={{backgroundColor:'transparent',marginBottom:'-60px'}}>
                     <div className="col-sm-1"></div>
                     <div className="col-sm-10 d-flex flex-row " style={{marginLeft:'0',marginRight:'0',padding:'0'}}>
-                        <div className="col d-flex flex-column flex-grow-1 justify-content-start rounded-start text-align-center p-2" style={{backgroundColor:'#222'}}>
-                            <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 mt-2'>{category.name}</p>
-                            <h5 style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}}>${category.budget}</h5>
+                        <div className="col d-flex flex-column flex-grow-1 justify-content-start rounded-start text-align-center " style={{backgroundColor:'#222',padding:'16px'}}>
+                            <h5 style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1'>{category.name}</h5>
+                            <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>${category.budget}</p>
                         </div>
-                        <div className="col d-flex flex-column flex-grow-1 justify-content-end text-end p-2 text-align-center rounded-end" style={{backgroundColor:'#222',marginRight:'-20px'}}>
-                            <h5 style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 mt-2'>${category.spent}</h5>
-                            <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}}>{category.percentage>0 ? Math.trunc(category.percentage) : 0}%</p>
+                        <div className="col d-flex flex-column flex-grow-1 justify-content-end text-end  text-align-center rounded-end" style={{backgroundColor:'#222',marginRight:'-20px',padding:'16px'}}>
+                            <h5 style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 '>${category.spent}</h5>
+                            <p style={{color:category.percentage>100 ? 'var(--Medium-Risk)' : 'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>{category.percentage>0 ? Math.trunc(category.percentage) : 0}%</p>
                         </div>
                     </div>
                     <div className="col-sm-1"></div>

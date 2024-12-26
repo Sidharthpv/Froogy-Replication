@@ -302,6 +302,8 @@ body{
     
     .headerItems{
         margin-top: 30px;
+        padding-right: 24px;
+        margin-right: 0;
     }
 
     .headerItems .headerLogo{
@@ -311,14 +313,7 @@ body{
     }
 
 
-   /* .tile-column-left{
-    padding-left: 38px !important;
-    
-   } */
 
-   /* .tile-column-right{
-    padding-right: 31px !important;
-   } */
 
    .tile{
     margin-bottom: 22px;
@@ -356,7 +351,14 @@ body{
     padding-left: 0;
    } */
 
-   
+   .expenseModal{
+    position: absolute;
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+    margin-top: 261px !important;
+    width: 400px;
+    border-radius: 40px;
+   }
 
 
   
