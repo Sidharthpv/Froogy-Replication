@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
 import { Col, Row } from 'react-bootstrap'
-import { auth, provider, db } from "../firebase";
+import { auth, db } from "../firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import { browserLocalPersistence, GoogleAuthProvider , setPersistence, signInWithPopup } from "firebase/auth";
+import { browserLocalPersistence, getRedirectResult, GoogleAuthProvider , setPersistence, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import Header from '../Components/Header';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
@@ -20,13 +20,39 @@ function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        console.log("Checking for redirect result...");
+        const result = await getRedirectResult(auth);
+        
+        if (result?.user) {
+          console.log("Redirect result user:", result.user);
+          await createUserDoc(result.user);
+          navigate("/home"); // ✅ Redirect to home page
+        } else {
+          console.log("No redirect result available.");
+        }
+      } catch (error) {
+        console.error("Redirect Login Error:", error);
+      }
+    };
+  
+    // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      console.log("Auth state changed:", currentUser);
       if (currentUser) {
-        navigate("/home");
+        navigate("/home"); // ✅ Redirect to home on login
       }
     });
-    return () => unsubscribe(); // Cleanup on unmount
-  }, []);
+  
+    checkRedirect(); // ✅ Always check redirect login on mount
+  
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, [navigate]);
+
+
+
+  
   
 
   //create user document for first time login
@@ -61,20 +87,68 @@ function Login() {
   };
   
 //function for google login
+  // const handleGoogleLogin = async () => {
+  //   try {
+  //     console.log("Starting Google Login...");
+  //     await setPersistence(auth, browserLocalPersistence).catch((error)=>{
+  //       alert("Failed to set persistence: ",error)
+  //     });
+  //     console.log("Persistence set successfully.");
+  //     await signInWithRedirect(auth, provider); // Redirects for login
+  //     console.log("Redirect initiated successfully.");
+  //     // navigate("/home");
+      
+  //   } catch (error) {
+  //     console.error("Login Error:", error);
+  //     alert("Failed to login:", error.message);
+  //   }
+  // };
+
+  // const handleGoogleLogin = async () => {
+  //   try {
+  //     await setPersistence(auth, browserLocalPersistence).catch((error)=>{
+  //       alert("Failed to set persistence: ",error)
+  //     });
+  //     const result = await signInWithPopup(auth, provider);
+  //     const user = result.user;
+  //     await createUserDoc(user);
+  //     console.log("User Info:", user);
+  //     // navigate("/home");
+      
+  //   } catch (error) {
+  //     console.error("Login Error:", error);
+  //     alert("Failed to login:", error.message);
+  //   }
+  // };
+
   const handleGoogleLogin = async () => {
     try {
-      await setPersistence(auth, browserLocalPersistence);
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      await createUserDoc(user);
-      console.log("User Info:", user);
-      navigate("/home");
-      
+      await setPersistence(auth, browserLocalPersistence); // 🔹 Ensure persistence before login
+  
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+  
+      // Detect Safari/iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  
+      if (isIOS || isSafari) {
+        console.log("iOS or Safari detected. Using signInWithRedirect.");
+        await signInWithRedirect(auth, provider); // 🔹 Use redirect to avoid pop-up issues
+      } else {
+        console.log("Using signInWithPopup.");
+        const result = await signInWithPopup(auth, provider);
+        if (result.user) {
+          await createUserDoc(result.user);
+          navigate("/home"); // 🔹 Ensure redirect to home
+        }
+      }
     } catch (error) {
       console.error("Login Error:", error);
-      alert("Failed to login");
+      alert("Failed to login: " + error.message);
     }
   };
+  
 
   return (
     <>
@@ -87,7 +161,7 @@ function Login() {
             </div>
             <div className="col-sm-4">
               <div className="container login-contents ms-0 d-flex flex-column flex-shrink-1 justify-content-center align-items-start flex-shrink-1">
-                  <h1 className=''>Heya!</h1>
+                  <h1 className=''>Heya! update3</h1>
                   <p style={{fontSize:'16px'}}>Use this simple expense tracker to monitor your daily <br />spending</p>
                   <p className='text-warning'>If you are logging in for the first time, Please go to Budgets <br />to set up your categories and budget amounts, like $1000 <br />for groceries.</p>
                   <div className='login-button' style={{backgroundColor:"transparent"}}>

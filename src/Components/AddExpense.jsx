@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react'
 import { db } from '../firebase'
 import { Link } from 'react-router-dom'
 import { FadeLoader } from 'react-spinners'
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
 
 function AddExpense({userId}) {
 
@@ -12,6 +14,7 @@ function AddExpense({userId}) {
     const[expenseName,setExpenseName] = useState("")
     const[upcomingPayments,setUpcomingPayments] = useState([])
     const[dateOption,setDateOption] = useState("today")
+    const[isDisabled, setIsDisabled] = useState(false);
 
     const[loading,setLoading] = useState(false)
 
@@ -28,13 +31,18 @@ function AddExpense({userId}) {
             }));
             setCategories1(categoryList1)
             console.log(categories1);
-            
+            setLoading(false)
         }
         catch(error){
-            console.log("error fetching categories:", error);
+            setLoading(false)
+            if (error.message === "Failed to fetch") {
+                toast.error("Network issue: Try again");
+            } else {
+            console.error("Error:", error.message);
+            }
             
         }
-        setLoading(false)
+        
     }
 // -------------------------------------------------------------------------------
 
@@ -44,75 +52,131 @@ function AddExpense({userId}) {
         // fetchUpcomingPayments()
     },[userId])
 
-// --------------------------function for adding a new expense-----------------------------
+// --------------------------function for adding a new expense and savings-----------------------------
     const handleAddExpense = async()=>{
+        setIsDisabled(true)
         setLoading(true)
 
         console.log("Expense Name:", expenseName);
         console.log("Expense Amount:", expenseAmount);
         console.log("Expense Category:", expenseCategory);
 
-        if(expenseAmount<0 ){
-            alert("Enter valid expense amount!")
-            
+            // Form validation
+        if (!expenseAmount || isNaN(expenseAmount) || Number(expenseAmount) <= 0) {
+            toast.warning("Please enter a valid expense amount.");
+            setLoading(false);
+            return;
         }
-        else if(!expenseCategory){
-            alert("enter valid category")
+
+        if (!expenseCategory) {
+            toast.warning("Please select a valid category.");
+            setLoading(false);
+            return;
         }
-        else if(!expenseName){
-            alert("enter valid expense name")
+
+        if (!expenseName.trim()) {
+            toast.warning("Please enter a valid expense name.");
+            setLoading(false);
+            return;
         }
+
         try{
             const categoryPath = `users/${userId}/categories/${expenseCategory}`;
             console.log(categoryPath);
             
             const categoryRef = doc(db,categoryPath);
-
-            // updating the totalExpenses field
-            const userRef = doc(db,`users/${userId}`);
-            const userDoc = await getDoc(userRef);
-            let currentTotalExpenses = 0;  
-            if (userDoc.exists()) {
-                currentTotalExpenses = userDoc.data().totalExpenses || 0;
-            }
-            const newTotalExpenses = currentTotalExpenses + Number(expenseAmount);
-            await updateDoc(userRef,{totalExpenses: newTotalExpenses})
-
-            const expenseRef = doc(collection(categoryRef,"expenses"));
-
-            const currentDate = new Date();
-            // const expenseDate = dateOption === "today" ? currentDate : new Date(currentDate.setDate(currentDate.getDate()-1))
-            await setDoc(expenseRef,{
-                name: expenseName,
-                amount: Number(expenseAmount),
-                timestamp: currentDate,
-            });
-
-            // updating the spent field in the category and updating percentage
             const categoryDoc = await getDoc(categoryRef)
-            if(categoryDoc.exists()){
-                const currentSpent = categoryDoc.data().spent || 0;
-                const updatedSpent = currentSpent + Number(expenseAmount)
 
-                //calculating new percentage
-                const budget = categoryDoc.data().budget || 0;
-                const updatedPercentage = budget>0?((updatedSpent/budget)*100).toFixed(2) : 0;
+            if(categoryDoc.data().type == "expense"){
                 
-                await updateDoc(categoryRef,{
-                    spent : updatedSpent,
-                    percentage: updatedPercentage
+                // updating the totalExpenses field
+                const userRef = doc(db,`users/${userId}`);
+                const userDoc = await getDoc(userRef);
+                let currentTotalExpenses = 0;  
+                if (userDoc.exists()) {
+                    currentTotalExpenses = userDoc.data().totalExpenses || 0;
+                }
+                const newTotalExpenses = currentTotalExpenses + Number(expenseAmount);
+                await updateDoc(userRef,{totalExpenses: newTotalExpenses})
+
+                const expenseRef = doc(collection(categoryRef,"expenses"));
+
+                const currentDate = new Date();
+                // const expenseDate = dateOption === "today" ? currentDate : new Date(currentDate.setDate(currentDate.getDate()-1))
+                await setDoc(expenseRef,{
+                    name: expenseName,
+                    amount: Number(expenseAmount),
+                    timestamp: currentDate,
                 });
+
+                // updating the spent field in the category and updating percentage
+                
+                if(categoryDoc.exists()){
+                    const currentSpent = categoryDoc.data().spent || 0;
+                    const updatedSpent = currentSpent + Number(expenseAmount)
+
+                    //calculating new percentage
+                    const budget = categoryDoc.data().budget || 0;
+                    const updatedPercentage = budget>0?((updatedSpent/budget)*100).toFixed(2) : 0;
+                    
+                    await updateDoc(categoryRef,{
+                        spent : updatedSpent,
+                        percentage: updatedPercentage
+                    });
+                }
             }
+            else{
+                // updating the totalSavings field
+                const userRef = doc(db,`users/${userId}`);
+                const userDoc = await getDoc(userRef);
+                let currentTotalSavings = 0;  
+                if (userDoc.exists()) {
+                    currentTotalSavings = userDoc.data().totalSavings || 0;
+                }
+                const newTotalSavings = currentTotalSavings + Number(expenseAmount);
+                await updateDoc(userRef,{totalSavings: newTotalSavings})
+
+                const savingRef = doc(collection(categoryRef,"savings"));
+
+                const currentDate = new Date();
+                // const expenseDate = dateOption === "today" ? currentDate : new Date(currentDate.setDate(currentDate.getDate()-1))
+                await setDoc(savingRef,{
+                    name: expenseName,
+                    amount: Number(expenseAmount),
+                    timestamp: currentDate,
+                });
+
+                // updating the spent field in the category and updating percentage
+                
+                if(categoryDoc.exists()){
+                    const currentSpent = categoryDoc.data().spent || 0;
+                    const updatedSpent = currentSpent + Number(expenseAmount)
+
+                    //calculating new percentage
+                    const amount = categoryDoc.data().amount || 0;
+                    const updatedPercentage = amount>0?((updatedSpent/amount)*100).toFixed(2) : 0;
+                    
+                    await updateDoc(categoryRef,{
+                        spent : updatedSpent,
+                        percentage: updatedPercentage
+                    });
+                }
+            }
+
+
             console.log("expense added successfully");
             setExpenseAmount("");
             setExpenseName("");
             setExpenseCategory("");
             fetchCategories1();
             setLoading(false)
+            setIsDisabled(false)
+            toast.success("Expense added successfully")
         }
         catch(error){
-            console.log("error adding expense:",error);
-            
+            setLoading(false)
+            toast.error("Error ading expense! Try again")
+            setIsDisabled(false)
         }
     }
 // ------------------------------------------------------------------------------
@@ -206,7 +270,7 @@ function AddExpense({userId}) {
                     
 
                     <div className='action-button ' style={{backgroundColor:"transparent"}}>
-                        <button className='btn  ps-3 pe-3 pt-2 pb-2 mt-3' onClick={handleAddExpense} style={{width: "270px",height:'45px',borderRadius:'30px'}}>Add expense</button>
+                        <button className='btn  ps-3 pe-3 pt-2 pb-2 mt-3' onClick={!isDisabled ? handleAddExpense : null} style={{width: "270px",height:'45px',borderRadius:'30px'}}>Add expense</button>
                     </div>
             </div>
         </div>
@@ -216,25 +280,64 @@ function AddExpense({userId}) {
     </div>
 
     {/* displaying all the expenses */}
+    {
+        categories1.filter((category)=>category.type=="expense").length > 0 && (
+            <p style={{fontSize:'var(--Body-Small)',color:'var(--Grey-500)',paddingLeft:'24px',marginBottom:'0'}}>Expense categories</p>
+        )
+    }
       <div className="container justify-content-center mb-5" style={{marginTop:'-20px'}}>
       {
         categories1.map((category)=>(
-            <Link to={`/categories/${category.id}`} style={{textDecoration:'none'}}>
+            category.type=="expense" ? (
+                <Link to={`/categories/${category.id}`} style={{textDecoration:'none'}}>
                 <div className="homeExpense row w-100 d-flex flex-row justify-content-center" style={{backgroundColor:'transparent',marginBottom:'-60px'}}>
                     <div className="col-sm-1"></div>
                     <div className="col-sm-10 d-flex flex-row " style={{marginLeft:'0',marginRight:'0',padding:'0'}}>
                         <div className="col d-flex flex-column flex-grow-1 justify-content-start rounded-start text-align-center " style={{backgroundColor:'#222',padding:'16px'}}>
                             <h5 style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1'>{category.name}</h5>
-                            <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>${category.budget}</p>
+                            <p style={{color:'var(--Grey-500)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>${category.budget}</p>
                         </div>
                         <div className="col d-flex flex-column flex-grow-1 justify-content-end text-end  text-align-center rounded-end" style={{backgroundColor:'#222',marginRight:'-20px',padding:'16px'}}>
-                            <h5 style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 '>${category.spent}</h5>
-                            <p style={{color:category.percentage>100 ? 'var(--Medium-Risk)' : 'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>{category.percentage>0 ? Math.trunc(category.percentage) : 0}%</p>
+                            <h5 style={{color:category.percentage>100 ? 'var(--Medium-Risk)' : 'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 '>${category.spent}</h5>
+                            <p style={{color:'var(--Grey-500)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>{category.percentage>0 ? Math.trunc(category.percentage) : 0}%</p>
                         </div>
                     </div>
                     <div className="col-sm-1"></div>
                 </div>
             </Link>
+            ) : null
+        ))
+      }
+        </div>
+
+
+        {/* displaying all the savings */}
+        {
+            categories1.filter((category)=>category.type=="saving").length > 0 && (
+                <p style={{fontSize:'var(--Body-Small)',color:'var(--Grey-500)',paddingLeft:'24px',marginBottom:'-20px'}}>Savings categories</p>
+            )
+        }
+      <div className="container justify-content-center mb-5" >
+      {
+        categories1.map((category)=>(
+            category.type=="saving" ? (
+                <Link to={`/categories/${category.id}`} style={{textDecoration:'none'}}>
+                <div className="homeExpense row w-100 d-flex flex-row justify-content-center" style={{backgroundColor:'transparent',marginBottom:'-60px'}}>
+                    <div className="col-sm-1"></div>
+                    <div className="col-sm-10 d-flex flex-row " style={{marginLeft:'0',marginRight:'0',padding:'0'}}>
+                        <div className="col d-flex flex-column flex-grow-1 justify-content-start rounded-start text-align-center " style={{backgroundColor:'#222',padding:'16px'}}>
+                            <h5 style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1'>{category.name}</h5>
+                            <p style={{color:'rgba(255, 255, 255, 0.315)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>${category.amount}</p>
+                        </div>
+                        <div className="col d-flex flex-column flex-grow-1 justify-content-end text-end  text-align-center rounded-end" style={{backgroundColor:'#222',marginRight:'-20px',padding:'16px'}}>
+                            <h5 style={{color:category.percentage>100 ? 'var(--Medium-Risk)' : 'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='mb-1 '>${category.spent}</h5>
+                            <p style={{color:'var(--Grey-500)',backgroundColor:'transparent',fontSize:'var(--Body-Small)'}} className='pb-0 mb-0'>{category.percentage>0 ? Math.trunc(category.percentage) : 0}%</p>
+                        </div>
+                    </div>
+                    <div className="col-sm-1"></div>
+                </div>
+            </Link>
+            ) : null
         ))
       }
         </div>
@@ -275,7 +378,7 @@ function AddExpense({userId}) {
 
         }
 
-
+        <ToastContainer position="top-center" autoClose={3000}/>
     </>
   )
 }

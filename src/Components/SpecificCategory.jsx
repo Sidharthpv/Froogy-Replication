@@ -2,6 +2,8 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { db } from '../firebase';
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
 
 function SpecificCategory({userId}) {
 
@@ -9,6 +11,7 @@ function SpecificCategory({userId}) {
     console.log("category id is: ",categoryId);
     
     const[expenses,setExpenses] = useState([]);
+    const[loading,setLoading] = useState(false)
     
 
     // -----------------------function for fetching the expenses for a particular category------------------------
@@ -45,12 +48,18 @@ function SpecificCategory({userId}) {
                     });
                 });
             } else {
-                console.error("Category not found");
+                toast.error("No documents found")
             }
             
             setExpenses(fetchedExpenses);
+            setLoading(false)
         } catch (error) {
-            console.log("Error fetching the expenses: ", error);
+            setLoading(false)
+            if (error.message === "Failed to fetch") {
+                toast.error("Network issue: Try again");
+            } else {
+            console.error("Error:", error.message);
+            }
         }
     };
 // ---------------------------------------------------------------------------------------------------
@@ -145,8 +154,17 @@ function SpecificCategory({userId}) {
         </div>
       </div> */}
       </div>
+
+      {
+            loading&&(
+                <div className='spinner'>
+                    <FadeLoader color='var(--Primary-400)' />
+                </div>
+            )
+
+        }
         
-        
+                <ToastContainer position="top-center" autoClose={3000}/>
     </>
   )
 }

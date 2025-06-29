@@ -3,6 +3,8 @@ import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc }
 import { db } from '../firebase'
 import { FadeLoader } from 'react-spinners'
 import { Modal } from 'react-bootstrap';
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
 
 
 function AllExpenses({userId}) {
@@ -76,43 +78,44 @@ function AllExpenses({userId}) {
       }
 
       for(const categoryDoc of categoriesSnap.docs){
-        const categoryId = categoryDoc.id;
-        const categoryname = categoryDoc.data().name;
+        if(categoryDoc.data().type=="expense"){
+          const categoryId = categoryDoc.id;
+          const categoryname = categoryDoc.data().name;
 
-        console.log(`Fetching expenses for category: ${categoryname} (ID: ${categoryId})`);
+          console.log(`Fetching expenses for category: ${categoryname} (ID: ${categoryId})`);
 
-        const expensesQuery = query(collection(db,`users/${userId}/categories/${categoryId}/expenses`));
-        const expensesSnap = await getDocs(expensesQuery);
+          const expensesQuery = query(collection(db,`users/${userId}/categories/${categoryId}/expenses`));
+          const expensesSnap = await getDocs(expensesQuery);
 
-        if (expensesSnap.empty) {
-          console.log(`No expenses found for category: ${categoryname}`);
-        }
+          if (expensesSnap.empty) {
+            console.log(`No expenses found for category: ${categoryname}`);
+          }
 
-        expensesSnap.forEach((expenseDoc)=>{
-          const expenseData = expenseDoc.data();
+          expensesSnap.forEach((expenseDoc)=>{
+            const expenseData = expenseDoc.data();
 
-          console.log("Expense Data:", expenseData);
+            console.log("Expense Data:", expenseData);
 
-            const dateObj = expenseData.timestamp.toDate();
-            const date = dateObj.getDate();
-            const month = dateObj.toLocaleString("default",{month:"short"});
-            console.log("date:",date);
+              const dateObj = expenseData.timestamp.toDate();
+              const date = dateObj.getDate();
+              const month = dateObj.toLocaleString("default",{month:"short"});
+              console.log("date:",date);
+              
+
+            fetchedExpenses.push({
+              id: expenseDoc.id,
+              categoryId,
+              date: `${date}`,
+              month: month,
+              name: expenseData.name,
+              amount: expenseData.amount,
+              timestamp: dateObj,
+              category: categoryname
+            });
             
-
-          fetchedExpenses.push({
-            id: expenseDoc.id,
-            categoryId,
-            date: `${date}`,
-            month: month,
-            name: expenseData.name,
-            amount: expenseData.amount,
-            timestamp: dateObj,
-            category: categoryname
           });
-          
-        });
+        }
         
-        setLoading(false)
       }
 
       // Sorting the expenses
@@ -120,11 +123,17 @@ function AllExpenses({userId}) {
       
       console.log("Final fetched expenses:", fetchedExpenses);
       setExpensesArray(fetchedExpenses)
-      
+      setLoading(false)
+
     }
     catch(error){
-      console.log("error fetching expenses:",error);
-      
+      setLoading(false)
+      if (error.message === "Failed to fetch") {
+        toast.error("Network issue: Try again");
+      } else {
+      console.error("Error:", error.message);
+      }
+
     }
   }
 // -------------------------------------------------------------------------------------------
@@ -202,13 +211,16 @@ const editExpense = async()=>{
         setUpdatedDate("");
         fetchExpenses();
         handleClose()
+        setLoading(false)
+        toast.success("Expense edited successfully")
       }catch(err){
-        console.log("error editing the expense: ",err);
+        setLoading(false)
+        toast.error("Error editing expense! Try again")
         
       }
     }
   }
-  setLoading(false)
+  
 
 }
 
@@ -249,12 +261,14 @@ const editExpense = async()=>{
       fetchExpenses();
       setIsDisabled(false);
       handleClose()
+      setLoading(false)
     }
     catch(error){
-      console.log("error deleting the expense: ",error);
-      
+      setLoading(false)
+      toast.error("Error deleting expense! Try again")
+      setIsDisabled(false)
+
     }
-    setLoading(false)
   };
 // ----------------------------------------------------------------------------------------------
 
@@ -318,8 +332,8 @@ const editExpense = async()=>{
 
       <div className="row">
         <div className="col-1"></div>
-        <div className="col-10" style={{margin:'0'}}>
-        <Modal show={show} onHide={handleClose} className='modal-sm expenseModal ' style={{backgroundColor:'transparent',marginTop:'115px'}} >
+        <div className="col-10 container-fluid" style={{margin:'0'}}>
+        <Modal show={show} onHide={handleClose} className='modal expenseModal ' style={{backgroundColor:'transparent',marginTop:'115px'}} >
           <Modal.Body style={{backgroundColor:'var(--Grey-900)'}}>
               <div className="container p-2" style={{backgroundColor:'transparent',marginTop:'24px',paddingLeft:'24px'}}>
                   <p style={{color:'white',backgroundColor:'transparent',fontSize:'var(--H3)'}}>Edit expense</p>
@@ -348,7 +362,7 @@ const editExpense = async()=>{
                         <button className='btn  ps-3 pe-3 pt-2 pb-2 ' style={{width: "100%",height:'45px',borderRadius:'30px',fontSize:'16px'}} onClick={editExpense}>Update expense</button>
                     </div>
                     <div className='action-button ' style={{backgroundColor:"transparent"}}>
-                        <button className='btn  ps-3 pe-3 pt-2 pb-2 ' style={{width: "100%",height:'45px',borderRadius:'30px',fontSize:'16px',backgroundColor:'transparent',color:'var(--High-Risk)'}} onClick={()=>deleteExpense(selectedExpenseId,selectedCategory,selectedExpenseAmount)}>Delete expense</button>
+                        <button className='btn  ps-3 pe-3 pt-2 pb-2 ' style={{width: "100%",height:'45px',borderRadius:'30px',fontSize:'16px',backgroundColor:'transparent',color:'var(--High-Risk)'}} onClick={!isDisabled ? ()=>deleteExpense(selectedExpenseId,selectedCategory,selectedExpenseAmount) : null}>Delete expense</button>
                     </div>
               </div>
           </Modal.Body>
@@ -368,7 +382,7 @@ const editExpense = async()=>{
         }
 
 
-       
+        <ToastContainer position="top-center" autoClose={3000}/>
     </>
   )
 }

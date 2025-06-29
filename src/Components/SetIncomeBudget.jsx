@@ -4,6 +4,8 @@ import { db } from '../firebase';
 import { Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { FadeLoader } from 'react-spinners'
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
 
 
 function SetIncomeBudget({userId}) {
@@ -29,46 +31,7 @@ function SetIncomeBudget({userId}) {
 
     useEffect(() => {
 
-        // fetch all existing category details
-        const fetchCategories = async () => {
-          setLoading(true)
-            try{
-                const categoriesRef = collection(db,`users/${userId}/categories`);
-                const categoriesSnap = await getDocs(categoriesRef);
-                const categoryList = categoriesSnap.docs.map((doc)=>({
-                id:doc.id,
-                ...doc.data(),
-            }));
 
-            setCategories(categoryList);
-            }
-            catch(error){
-                console.log("error fetching category list:",error);
-                
-            }
-            setLoading(false)
-        }
-        
-
-
-
-        //fetch total budgeted amount,savings,expenses,salary and set the surplus amount
-        const fetchTotals = async () => {
-          try {
-            const userRef = doc(db, `users/${userId}`);
-            const userDoc = await getDoc(userRef);
-            if (userDoc.exists()) {
-                const userData = userDoc.data()
-                setTotalBudgeted(userDoc.data().totalBudgeted || 0);
-                setTotalSavings(userDoc.data().totalSavings || 0);
-                setTotalExpenses(userDoc.data().totalExpenses || 0);
-                setSalary(userData.salary || 0)
-                setSurplus(userData.salary - userData.totalBudgeted)
-            }
-          } catch (error) {
-            console.error("Error fetching total budgeted:", error);
-          }
-        };
     
         fetchTotals();
         fetchCategories();
@@ -77,8 +40,64 @@ function SetIncomeBudget({userId}) {
       }, [userId]);
 
 
+      // fetch all existing category details
+      const fetchCategories = async () => {
+        setLoading(true)
+          try{
+              const categoriesRef = collection(db,`users/${userId}/categories`);
+              const categoriesSnap = await getDocs(categoriesRef);
+              const categoryList = categoriesSnap.docs.map((doc)=>({
+              id:doc.id,
+              ...doc.data(),
+          }));
+
+          setCategories(categoryList);
+          setLoading(false)
+          }
+          catch(error){
+            setLoading(false)
+            if (error.message === "Failed to fetch") {
+              toast.error("Network issue: Try again");
+            } else {
+            console.error("Error:", error.message);
+            }
+              
+          }
+          
+      }
+      
+
+
+
+      //fetch total budgeted amount,savings,expenses,salary and set the surplus amount
+      const fetchTotals = async () => {
+        setLoading(true)
+        try {
+          const userRef = doc(db, `users/${userId}`);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+              const userData = userDoc.data()
+              setTotalBudgeted(userDoc.data().totalBudgeted || 0);
+              setTotalSavings(userDoc.data().totalSavings || 0);
+              setTotalExpenses(userDoc.data().totalExpenses || 0);
+              setSalary(userData.salary || 0)
+              setSurplus(userData.salary - userData.totalBudgeted)
+              setLoading(false)
+          }
+        } catch (error) {
+          setLoading(false)
+          if (error.message === "Failed to fetch") {
+            toast.error("Network issue: Try again");
+          } else {
+          console.error("Error:", error.message);
+          }
+        }
+      };
+
+
       // --------------------------------function for adding salary-----------------------------
     const addSalary = async()=>{
+      setLoading(true)
         // e.preventDefault();
         if(!salary || salary<=0){
             alert("enter a valid salary")
@@ -88,14 +107,18 @@ function SetIncomeBudget({userId}) {
             const userRef = doc(db, `users/${userId}`);
             await updateDoc(userRef, { salary: Number(salary) });
             setSalary(Number(salary))
+            handleClose();
+            setLoading(false)
+          
         }
         catch(error)
         {
-            console.log("error updating salary:",error);
+            setLoading(false)
+            toast.error("Error adding salary! Try again")
             
         }
         
-        handleClose();
+       
         
     }
 // ----------------------------------------------------------------------------
@@ -103,20 +126,35 @@ function SetIncomeBudget({userId}) {
 
 //-------------------- function for adding a new category and the budget for it--------------------
     const addBudget = async () => {
+      setIsDisabled(true)
       setLoading(true)
         // e.preventDefault();
     
-        if (!categoryName || budget <= 0) {
-            alert("enter a valid category name and budget")
+        // Form validation
+          if (!categoryName.trim()) {
+            toast.warning("Please enter a valid category name.");
+            setLoading(false);
             return;
-        }
-    
+          }
+
+          if (!budget || isNaN(budget) || Number(budget) <= 0) {
+            toast.warning("Please enter a valid budget amount greater than 0.");
+            setLoading(false);
+            return;
+          }
+
+          if (!expSave || (expSave !== "expenses" && expSave !== "savings")) {
+            toast.warning("Please select a valid type (Expenses or Savings).");
+            setLoading(false);
+            return;
+          }
+
         try {
           if(expSave=="expenses"){
             const percentage = budget > 0 ? 0 : 0;
             // Add the new category to the subcollection
             const categoryRef = doc(collection(db, `users/${userId}/categories`));
-            await setDoc(categoryRef, { name: categoryName, budget: Number(budget), spent: 0 });
+            await setDoc(categoryRef, { name: categoryName, budget: Number(budget), spent: 0, type: "expense" });
       
             //  Get the current total budgeted value
             const userRef = doc(db, `users/${userId}`);
@@ -138,44 +176,59 @@ function SetIncomeBudget({userId}) {
 
             // Update state to reflect new totalBudgeted
             setTotalBudgeted(newTotal);
-            setSurplus(salary - newTotal)
+            // setSurplus(salary - newTotal)
             console.log("data added successfully");
+            toast.success("Expense category added successfully")
+            
           }
           else{
-            // Add new savings
-            const savingsRef = doc(collection(db,`users/${userId}/savings`));
-            await setDoc(savingsRef,{name: categoryName, amount: Number(budget), timestamp: new Date()});
+            const percentage = budget > 0 ? 0 : 0;
+            const categoryRef = doc(collection(db, `users/${userId}/categories`));
+            // Add new savings category
+            const savingsRef = doc(collection(db,`users/${userId}/categories`));
+            await setDoc(savingsRef,{name: categoryName, amount: Number(budget), spent: 0, type: "saving"});
 
             // Get current total savings value
-            const userRef = doc(db,`users/${userId}`);
-            const userDoc = await getDoc(userRef);
-            let currentTotalSavings = 0;
+            // const userRef = doc(db,`users/${userId}`);
+            // const userDoc = await getDoc(userRef);
+            // let currentTotalSavings = 0;
 
-            if(userDoc.exists()){
-              currentTotalSavings = userDoc.data().totalSavings || 0;
-            }
+            // if(userDoc.exists()){
+            //   currentTotalSavings = userDoc.data().totalSavings || 0;
+            // }
 
-            // Update the totalSavings field
-            const newTotal = currentTotalSavings + Number(budget);
-            await updateDoc(userRef, {totalSavings: newTotal});
+            // // Update the totalSavings field
+            // const newTotal = currentTotalSavings + Number(budget);
+            // await updateDoc(userRef, {totalSavings: newTotal});
 
             // Update state to reflect new totalSavings
-            setTotalSavings(newTotal)
-            setSurplus(salary - newTotal)
+            // setTotalSavings(newTotal)
+            // setSurplus(salary - newTotal)
+
+            setCategories((prevCategories)=>[
+              ...prevCategories,
+              {id: categoryRef.id,name: categoryName ,budget: Number(budget),spent:0,percentage:percentage}
+            ]);
+
             console.log("savings added successfully");
+            toast.success("Saving category added successfully")
             
           }
          
-            
-          
-        } catch (error) {
-          console.error("Error updating total budgeted:", error);
-        }
-    
-        // Reset form fields
+            // Reset form fields
         setCategoryName("");
         setBudget("");
         setLoading(false)
+        fetchCategories()
+        setIsDisabled(false)
+          
+        } catch (error) {
+          setLoading(false)
+          toast.error("Error adding category! Try again")
+          setIsDisabled(false)
+        }
+    
+       
       };
 // ---------------------------------------------------------------------------------------
 
@@ -194,29 +247,49 @@ function SetIncomeBudget({userId}) {
               return;
             }
             
-            const currentSpent = categorySnap.data().spent
+            if(categorySnap.data().type=="expense"){
+              const currentSpent = categorySnap.data().spent
             
-            await deleteDoc(categoryRef);
+              await deleteDoc(categoryRef);
 
-            // Update totalBudgeted in Firestore
-            const userRef = doc(db, `users/${userId}`);
-            const userDoc = await getDoc(userRef)
-            const newTotalBudgeted = totalBudgeted - categoryBudget;
-            const currentTotalExpenses = userDoc.data().totalExpenses || 0
-            const newTotalExpenses = currentTotalExpenses - currentSpent
-            await updateDoc(userRef, { totalBudgeted: newTotalBudgeted, totalExpenses: newTotalExpenses });
+              // Update totalBudgeted in Firestore
+              const userRef = doc(db, `users/${userId}`);
+              const userDoc = await getDoc(userRef)
+              const newTotalBudgeted = totalBudgeted - categoryBudget;
+              const currentTotalExpenses = userDoc.data().totalExpenses || 0
+              const newTotalExpenses = currentTotalExpenses - currentSpent
+              await updateDoc(userRef, { totalBudgeted: newTotalBudgeted, totalExpenses: newTotalExpenses });
+              setTotalBudgeted(newTotalBudgeted);
+              setTotalExpenses(newTotalExpenses)
+              // setSurplus(salary - newTotalBudgeted);
+
+              
+            }
+            else{
+              const currentSpent = categorySnap.data().spent
+            
+              await deleteDoc(categoryRef);
+              // Update totalSavings in Firestore
+              const userRef = doc(db, `users/${userId}`);
+              const userDoc = await getDoc(userRef)
+              const currentTotalSavings = userDoc.data().totalSavings || 0
+              const newTotalSavings = currentTotalSavings - currentSpent
+              await updateDoc(userRef, { totalSavings: newTotalSavings });
+              setTotalSavings(newTotalSavings)
+            }
 
             // Update local state
             setCategories(categories.filter((category) => category.id !== categoryId));
-            setTotalBudgeted(newTotalBudgeted);
-            setTotalExpenses(newTotalExpenses)
-            setSurplus(salary - newTotalBudgeted);
             setIsDisabled(false)
             console.log("Category deleted successfully");
+            setLoading(false)
+
         } catch (error) {
-            console.error("Error deleting category:", error);
+          setLoading(false)
+          toast.error("Error deleting category! Try again")
+          setIsDisabled(false)
         }
-        setLoading(false)
+        
     };
 // ------------------------------------------------------------------------------------------------
     
@@ -330,7 +403,7 @@ function SetIncomeBudget({userId}) {
 
               <input class="form-control form-control-lg formInput text-light mb-2" type="text" id='budget' onChange={e=>setBudget(e.target.value)} value={budget} placeholder="Budget amount"  style={{marginLeft:'15px',marginRight:'10px',width:'100%',backgroundColor:'black'}}/>
               <div className='action-button' style={{backgroundColor:"transparent",paddingLeft:'0',paddingRight:'0'}}>
-                  <button onClick={addBudget} className='btn ps-3 pe-3 pt-2 pb-2 mt-2' style={{width: "100%",height:'45px',borderRadius:'30px',marginLeft:'15px'}}>Add budget</button>
+                  <button onClick={!isDisabled ? addBudget : null} className='btn ps-3 pe-3 pt-2 pb-2 mt-2' style={{width: "100%",height:'45px',borderRadius:'30px',marginLeft:'15px'}}>Add budget</button>
               </div>
             </div>
           </div>
@@ -340,7 +413,12 @@ function SetIncomeBudget({userId}) {
 
 
 
-{/* displaying the existing categories */}
+{/* displaying the existing expense categories */}
+        {
+            categories.filter((category)=>category.type=="expense").length > 0 && (
+                <p style={{fontSize:'var(--Body-Small)',color:'var(--Grey-500)',paddingLeft:'24px',marginBottom:'-20px',marginTop:'20px'}}>Expense categories</p>
+            )
+        }
       <div className="row d-flex flex-column  " style={{backgroundColor:'black',marginRight:'0'}}>
         <div className="col-sm-1"></div>
         <div className="col-sm-12 budgetCategory" style={{backgroundColor:'black'}}>
@@ -349,7 +427,8 @@ function SetIncomeBudget({userId}) {
             </div>
         {
             categories.map((category)=>(
-                <div className="col w-50 m-auto d-flex flex-row justify-content-between  text-center p-2 " style={{backgroundColor:'transparent',width:'100%'}}>
+                category.type=="expense" ? (
+                  <div className="col w-50 m-auto d-flex flex-row justify-content-between  text-center p-2 " style={{backgroundColor:'transparent',width:'100%'}}>
                     <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} >{category.name}</p>
                     <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='text-end'>${category.budget} &nbsp;&nbsp;&nbsp;&nbsp; <span style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)',backgroundColor:'transparent'}}>{Math.trunc(((category.budget/salary)*100))}%</span> &nbsp;&nbsp;&nbsp;&nbsp;
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{color: "var(--Grey-500)",cursor:'pointer',opacity:'0.5',backgroundColor:'transparent',marginTop:'-5px'}} onClick={!isDisabled?()=>deleteCategory(category.id,category.budget):null} >
@@ -359,11 +438,47 @@ function SetIncomeBudget({userId}) {
                       </svg>
                     </p>
                 </div>
+                ) : null
             ))
         }
         </div>
         <div className="col-sm-1"></div>
       </div>
+
+
+      {/* displaying the existing savings categories */}
+      {
+            categories.filter((category)=>category.type=="saving").length > 0 && (
+                <p style={{fontSize:'var(--Body-Small)',color:'var(--Grey-500)',paddingLeft:'24px',marginBottom:'-20px'}}>Savings categories</p>
+            )
+      }
+
+      <div className="row d-flex flex-column  " style={{backgroundColor:'black',marginRight:'0'}}>
+        <div className="col-sm-1"></div>
+        <div className="col-sm-12 budgetCategory" style={{backgroundColor:'black'}}>
+            <div className="container p-2 " style={{backgroundColor:'transparent'}}>
+              <hr style={{color:'#222',height:'3px',marginTop:'-15px'}}/>
+            </div>
+        {
+            categories.map((category)=>(
+                category.type=="saving" ? (
+                  <div className="col w-50 m-auto d-flex flex-row justify-content-between  text-center p-2 " style={{backgroundColor:'transparent',width:'100%'}}>
+                    <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} >{category.name}</p>
+                    <p style={{color:'var(--Grey-300)',backgroundColor:'transparent',fontSize:'var(--Body-Medium)'}} className='text-end'>${category.amount} &nbsp;&nbsp;&nbsp;&nbsp; <span style={{color:'var(--Grey-500)',fontSize:'var(--Body-Small)',backgroundColor:'transparent'}}>{Math.trunc(((category.amount/salary)*100))}%</span> &nbsp;&nbsp;&nbsp;&nbsp;
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{color: "var(--Grey-500)",cursor:'pointer',opacity:'0.5',backgroundColor:'transparent',marginTop:'-5px'}} onClick={!isDisabled?()=>deleteCategory(category.id,category.amount):null} >
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M17 9H8L8 19H17V9ZM6 7V19C6 20.1046 6.89543 21 8 21H17C18.1046 21 19 20.1046 19 19V7H6Z" fill="#717171"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M20 6L5 6L5 4L20 4V6Z" fill="#717171"/>
+                        <path d="M10 3L9 4H16L15 3H10Z" fill="#717171"/>
+                      </svg>
+                    </p>
+                </div>
+                ) : null
+            ))
+        }
+        </div>
+        <div className="col-sm-1"></div>
+      </div>
+
 
 
       </div> 
@@ -379,7 +494,7 @@ function SetIncomeBudget({userId}) {
         }
 
 
-
+        <ToastContainer position="top-center" autoClose={3000}/>
     </>
   )
 }
